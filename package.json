@@ -1,0 +1,29 @@
+{
+  "name": "otobill-ai-assistant",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adamufura/otobill-ai-assistant.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/adamufura/otobill-ai-assistant/issues"
+  },
+  "homepage": "https://github.com/adamufura/otobill-ai-assistant#readme",
+  "dependencies": {
+    "@deepgram/sdk": "^5.4.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "openai": "^6.42.0",
+    "ws": "^8.20.0"
+  }
+}
