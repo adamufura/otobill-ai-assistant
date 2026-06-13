@@ -266,6 +266,17 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Otobill AI Assistant running on port ${PORT}`);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use. Stop the other process first:`);
+    console.error(`   lsof -i :${PORT}`);
+    console.error(`   kill <PID>`);
+  } else {
+    console.error('❌ Server failed to start:', err.message);
+  }
+  process.exit(1);
 });
