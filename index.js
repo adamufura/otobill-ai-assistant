@@ -1,4 +1,4 @@
-// index.js — Otobill AI Call Assistant (Africa's Talking version)
+// index.js — Asolar AI Call Assistant (Africa's Talking version)
 // Flow: Caller dials in -> AT hits /voice -> we Say + Record
 //       -> AT hits /voice/process with recordingUrl -> we transcribe (Deepgram)
 //       -> send to OpenAI -> respond with Say + Record again (loop)
@@ -28,21 +28,40 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // In-memory conversation history per call session
 const sessions = {};
 
-const SYSTEM_PROMPT = `You are Pro, the friendly AI voice assistant for Otobill — Nigeria's trusted bill payment platform.
+const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || '07080672062';
 
-ABOUT OTOBILL:
-Otobill lets customers pay electricity bills, subscribe to TV (DStv, GOTV, Startimes), buy airtime and data for all Nigerian networks (MTN, Airtel, Glo, 9mobile), verify NIN and BVN, and manage their wallet — all securely in one place via the Otobill app/website.
+const SYSTEM_PROMPT = `You are the friendly AI voice assistant for Asolar Systems Nigeria Limited — a solar power company helping households with reliable, affordable energy.
 
-YOUR JOB ON THIS CALL:
-- Greet callers warmly and briefly
-- Help with questions about: airtime/data top-up, electricity bill payments (PHCN, EKEDC, IKEDC, AEDC, etc), TV subscriptions (DStv, GOTV, Startimes), NIN/BVN verification, wallet funding, and general "how do I..." questions about using Otobill
-- If you genuinely don't know specific account details (balances, transaction status, personal account issues), say you'll pass it to the support team — then ask for their name and phone number
-- Keep every response SHORT — 1-2 sentences max. This is a phone call, not a chat.
-- Sound warm, natural, and human — never robotic or overly formal
+ABOUT ASOLAR:
+Asolar provides solar power solutions for different household needs:
+
+1. BASIC LIGHTING SYSTEM — three bulbs, battery, solar panel, torch, and radio. Good for simple lighting and phone charging.
+
+2. FAN SYSTEM — four bulbs, battery, solar panel, torch, and radio. Same essentials as the basic system, plus a fan for cooling.
+
+3. TV SYSTEM — television, battery, solar panel, torch, and radio. For entertainment and powering essential devices.
+
+PAYMENT OPTIONS (both available on all systems):
+- ONE-OFF — pay the full cost upfront, then use without further payments.
+- PAY-AS-YOU-GO (PayGo) — pay a deposit first, then smaller installments over time.
+
+OFFICE: 75 Aminu Kano Crescent, for installation, inquiries, and support.
+WHATSAPP / PHONE: ${WHATSAPP_NUMBER} — when a customer is ready to buy, has chosen a system, or needs follow-up, tell them to message Asolar on WhatsApp at ${WHATSAPP_NUMBER}.
+
+HOW TO HANDLE THE CALL:
+- CRITICAL: The caller speaks first. You only respond AFTER they have spoken. Every reply must directly relate to what they just said — answer their actual question or comment before anything else.
+- Do NOT ignore what they said. Do NOT start with a sales script or list products they did not ask about.
+- Keep every reply SHORT — 1 to 2 sentences — then stop and let them speak again. This is a conversation, not a lecture.
+- Match their words to the best Asolar answer: if they mention lights or charging, talk about the basic system; if they mention heat or fan, talk about the fan system; if they mention TV, talk about the TV system; if they mention cost or installments, explain PayGo vs one-off.
+- If they are vague, ask ONE short clarifying question based on what little they said — do not dump all products at once.
+- Only suggest another product if what they described does not fit the first option they asked about.
+- Explain in plain, warm, natural language — never robotic or overly formal.
+- If they ask about exact price, installation dates, or account details you do not have, direct them to WhatsApp at ${WHATSAPP_NUMBER} or visit 75 Aminu Kano Crescent.
+- When they are ready to buy or have made a choice, tell them to message Asolar on WhatsApp at ${WHATSAPP_NUMBER} with their name, preferred system, and payment option.
 
 ENDING THE CALL:
-- If the caller says "thank you", "goodbye", "that's all", "no more questions", "bye", or similar, give a brief warm closing (e.g. "You're welcome, have a great day!") and set "endCall": true
-- If you've taken a message (name + phone number) and confirmed it, you can end the call with a friendly closing and set "endCall": true
+- If the caller says "thank you", "goodbye", "that's all", "no more questions", "bye", or similar, give a brief warm closing (e.g. "Thank you for calling Asolar, have a great day!") and set "endCall": true
+- If you have directed them to WhatsApp and they confirm they have no more questions, close warmly and set "endCall": true
 - Otherwise set "endCall": false
 
 RESPONSE FORMAT:
@@ -158,7 +177,7 @@ app.post('/voice', (req, res) => {
     sessions[sessionId] = { history: [] };
     console.log('🆕 New session created:', sessionId);
 
-    const greeting = "Hello, thank you for calling Otobill. I'm Pro, your AI assistant. Ask your question, then press the hash key for a quicker reply. How can I help you today?";
+    const greeting = "Thank you for calling Asolar. How can we help you today?";
     res.set('Content-Type', 'application/xml');
     return res.send(buildResponse(greeting, '/voice/process'));
   }
@@ -186,7 +205,7 @@ app.post('/voice/process', async (req, res) => {
   // No speech captured
   if (!recordingUrl) {
     console.log('⚠️ No recordingUrl received — caller may not have spoken or recording failed');
-    const retryText = "Sorry, I didn't catch that. Could you please repeat your question?";
+    const retryText = "Sorry, I didn't hear you. Please go ahead — how can we help you?";
     res.set('Content-Type', 'application/xml');
     return res.send(buildResponse(retryText, '/voice/process'));
   }
@@ -199,7 +218,7 @@ app.post('/voice/process', async (req, res) => {
     console.log('🗣️ Caller said:', transcript || '(empty)');
 
     if (!transcript) {
-      const retryText = "I'm sorry, I couldn't hear that clearly. Could you say that again?";
+      const retryText = "I still didn't catch that. Tell us what you need — lighting, a fan, or TV — and we'll guide you. You can also message us on WhatsApp at 07080672062.";
       res.set('Content-Type', 'application/xml');
       return res.send(buildResponse(retryText, '/voice/process'));
     }
@@ -231,7 +250,7 @@ app.post('/voice/process', async (req, res) => {
       endCall = false;
     }
 
-    console.log('🤖 Pro responding:', aiResponse, '| endCall:', endCall);
+    console.log('🤖 Asolar responding:', aiResponse, '| endCall:', endCall);
 
     session.history.push({ role: 'assistant', content: aiResponse });
 
@@ -262,12 +281,12 @@ function logCallEnd(body, sessionId) {
 
 // ── Health check ──
 app.get('/', (req, res) => {
-  res.send('🤖 Otobill AI Assistant (Africa\'s Talking) is running!');
+  res.send('🤖 Asolar AI Assistant (Africa\'s Talking) is running!');
 });
 
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Otobill AI Assistant running on port ${PORT}`);
+  console.log(`🚀 Asolar AI Assistant running on port ${PORT}`);
 });
 
 server.on('error', (err) => {
